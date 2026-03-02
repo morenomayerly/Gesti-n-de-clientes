@@ -150,3 +150,31 @@ function unlinkRow(id) { alert("Cliente " + id + " desasociado del aliado correc
 
 /* INICIO AUTOMÁTICO */
 document.addEventListener("DOMContentLoaded", renderClientes);
+function desasociarCliente(id) {
+    const cli = clientes.find(c => c.id === id);
+    if (!cli) return;
+
+    // 1. Pedimos la confirmación inicial
+    if (confirm(`¿Seguro que desea desasociar a ${cli.nombre}? El vínculo se romperá.`)) {
+        
+        // 2. Pedimos el motivo de la desasociación
+        let motivo = prompt("Por favor, ingrese el motivo de la desasociación:", "");
+
+        // 3. Verificamos que no haya cancelado el cuadro de texto
+        if (motivo !== null) {
+            if (motivo.trim() === "") {
+                alert("Debes indicar un motivo para poder desasociar al cliente.");
+                return; // Cancela la operación si no escribió nada
+            }
+
+            // Aquí podrías guardar el motivo en tu base de datos o enviarlo a un servidor
+            console.log(`Cliente ${id} desasociado por: ${motivo}`);
+            
+            // 4. Procedemos a eliminarlo de la lista visual
+            clientes = clientes.filter(c => c.id !== id);
+            
+            alert("Cliente desasociado con éxito.");
+            renderizarTodo();
+        }
+    }
+}

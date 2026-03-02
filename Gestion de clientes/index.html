@@ -3,92 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Gestión con Menú Lateral</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Panel de Gestión  - Kiai</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        :root { 
+            --primary-color: #27ae60; 
+            --border-menta: #8bbbb0; 
+            --bg-color: #f4f7f6;
+            --orange-kiai: #e67e22; 
+            --text-color: #333;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; display: flex; color: var(--text-color); }
+
+        .sidebar { width: 200px; background: var(--orange-kiai); color: white; height: 100vh; padding: 10px; position: fixed; }
+        .sidebar h2 { font-size: 18px; margin-bottom: 20px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 10px; }
+        .nav-btn { width: 100%; padding: 10px; background: transparent; border: none; color: white; text-align: left; cursor: pointer; border-radius: 3px; margin-bottom: 5px; font-weight: bold; transition: 0.3s; }
+        .nav-btn.active { background: rgba(255,255,255,0.2); }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .main-content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-title { color: var(--orange-kiai); margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        .clientes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-top: 25px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .card h3 { color: var(--text-color); margin-top: 0; }
+        .card p { font-size: 14px; margin: 8px 0; color: #666; }
+        .badge-activo { background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        .badge-inactivo { background: #ffebee; color: #c62828; padding: 4px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        .card-actions { margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 25px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        th { background: var(--orange-kiai); color: white; padding: 18px; text-align: left; text-transform: uppercase; font-size: 13px; }
+        td { padding: 18px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .badge { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .badge.active { background: #e8f5e9; color: #2e7d32; }
+        .badge.suspended { background: #ffebee; color: #c62828; }
+
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 12px; }
+        .btn:hover { opacity: 0.8; }
+        .btn-green { background: var(--primary-color); color: white; display: flex; align-items: center; gap: 8px; padding: 12px 20px; font-size: 14px; }
+        .btn-edit { background: #95a5a6; color: white; }
+        .btn-suspend { background: var(--orange-kiai); color: white; }
+        .btn-unlink { background: #7f8c8d; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+
+        .modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 3000;
+            overflow-y: auto;
+            padding: 40px 0;
+        }
+        .modal-overlay.active { display: block; }
+        .form-card { 
+            background: white; padding: 50px; border-radius: 12px; width: 90%; max-width: 1000px; margin: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .section-title { color: var(--border-menta); font-size: 24px; border-bottom: 2px solid #eee; padding-bottom: 12px; margin: 40px 0 25px; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+        .field { margin-bottom: 20px; display: flex; flex-direction: column; }
+        label { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #444; }
+        label::after { content: " *"; color: #e74c3c; }
+        input, select { padding: 14px; border: 1px solid var(--border-menta); border-radius: 10px; outline: none; font-size: 15px; }
+        .checkbox-group { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .checkbox-item { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+        .btn-registrar { background: var(--primary-color); color: white; border: none; padding: 15px 40px; border-radius: 8px; font-weight: bold; cursor: pointer; float: right; margin-top: 30px; font-size: 16px; }
+        .btn-cerrar { background: #ccc; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; float: left; margin-top: 30px; font-size: 16px; }
+    </style>
 </head>
 <body>
 
     <nav class="sidebar">
-        <h2>VISTA TARJETAS</h2>
-        <button class="nav-btn active" onclick="showTab('seccion-cards', this)">Vista Tarjetas</button>
-        <button class="nav-btn" onclick="showTab('seccion-tabla', this)">Módulo Aliados</button>
+        <h2>Gestión Kiai</h2>
+        <button class="nav-btn active" onclick="showTab('seccion-cards', this)">Gestion de cliente</button>
+        <button class="nav-btn" onclick="showTab('seccion-tabla', this)">Tabla gestion cliente</button>
     </nav>
 
     <main class="main-content">
-        <div><img src="logo.png" alt="Logo"></div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <strong style="color: var(--orange-kiai); font-size: 24px;"> <img src="logo.png" alt=""></strong>
+        </div>
 
         <div id="seccion-cards" class="tab-content active">
-            <div class="c1-header">
-                <h1>Gestión de Clientes</h1>
-                <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nuevo Cliente</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h1 class="tab-title" style="border:none; margin:0;">Gestión de Clientes</h1>
+                <button class="btn-green" onclick="abrirCuestionario()">+ Nuevo Cliente</button>
             </div>
             <div id="clientesContainer" class="clientes-grid"></div>
-
-            <div id="modalCliente" class="modal hidden">
-                <div class="modal-content">
-                    <h3 id="modalTitulo">Nuevo Cliente</h3>
-                    <form id="clienteForm">
-                        <input type="hidden" id="clienteId">
-                        <input type="text" id="nombre" placeholder="Nombre" required>
-                        <input type="text" id="servicio" placeholder="Servicio" required>
-                        <input type="text" id="nit" placeholder="NIT" required>
-                        <input type="text" id="plan" placeholder="Plan">
-                        <input type="date" id="fecha">
-                        <div style="display:flex; gap:10px; margin-top:10px;">
-                            <button class="btn btn-primary" type="submit" style="flex:1">Guardar</button>
-                            <button type="button" class="btn btn-secondary" onclick="cerrarModal()" style="flex:1">Cancelar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
         </div>
 
         <div id="seccion-tabla" class="tab-content">
-            <div class="c2-container">
-                <h2>Módulo de Gestión de Clientes (Aliados)</h2>
-                <div class="form-group">
-                    <input type="hidden" id="edit-id">
-                    <input type="text" id="name" class="c2-input" placeholder="Nombre del Cliente">
-                    <input type="text" id="NIT" class="c2-input" placeholder="NIT">
-                    <input type="text" id="state" class="c2-input" placeholder="Estado">
-                    <input type="text" id="Plan" class="c2-input" placeholder="Plan">
-                    <input type="text" id="Active since" class="c2-input" placeholder="Activo desde">
-                    <button class="btn btn-add" onclick="saveClient()">Guardar / Actualizar</button>
-                    <button class="btn btn-excel" onclick="downloadExcel()">Descargar Excel</button>
-                </div>
-
-                <table id="clientTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th><th>Cliente</th><th>NIT</th><th>Estado</th><th>Plan</th><th>Activo desde</th><th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr id="row-1">
-                            <td>1</td><td>Adriana Wilches</td><td>828002088</td><td><span class="badge active">Activo</span></td><td>Plan premium</td><td>2024-01-15</td>
-                            <td>
-                                <button class="btn btn-edit" onclick="editRow(1)">Editar</button>
-                                <button class="btn btn-suspend" onclick="toggleStatus(1)">Suspender</button>
-                                <button class="btn btn-unlink" onclick="unlinkRow(1)">Desasociar</button>
-                                <button class="btn btn-delete" onclick="deleteRow(1)">Eliminar</button>
-                            </td>
-                        </tr>
-                        <tr id="row-2">
-                            <td>2</td><td>Carlos Mendez</td><td>900123456</td><td><span class="badge suspended">Inactivo</span></td><td>Plan Basico</td><td>2023-09-10</td>
-                            <td>
-                                <button class="btn btn-edit" onclick="editRow(2)">Editar</button>
-                                <button class="btn btn-suspend" onclick="toggleStatus(2)">Suspender</button>
-                                <button class="btn btn-unlink" onclick="unlinkRow(2)">Desasociar</button>
-                                <button class="btn btn-delete" onclick="deleteRow(2)">Eliminar</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <h2 class="tab-title">Módulo de Gestión de Clientes</h2>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+                <button class="btn-green" onclick="abrirCuestionario()">+ Registrar Nuevo</button>
+                <button class="btn btn-green" onclick="downloadExcel()">Descargar Excel</button>
             </div>
+            <table id="clientTable">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Cliente</th><th>NIT</th><th>Estado</th><th>Plan</th><th>Fecha</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
         </div>
     </main>
 
-    <script src="clientes.js"></script>
+    <div id="modalCuestionario" class="modal-overlay">
+        <div class="form-card">
+            <h2 id="modal-titulo" class="section-title" style="margin-top:0">Datos de Empresa / Usuario</h2>
+            <form id="registroForm">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Tipo de persona</label>
+                        <select id="reg-tipo"><option>Natural</option><option>Jurídica</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Razón Social / Nombre</label>
+                        <input type="text" id="reg-nombre" placeholder="Ej: Adriana Wilches" required>
+                    </div>
+                    <div class="field">
+                        <label>Documento / NIT</label>
+                        <input type="text" id="reg-nit" required>
+                    </div>
+                    <div class="field"><label>Dígito</label><input type="text"></div>
+                    <div class="field"><label>Email</label><input type="email"></div>
+                    <div class="field"><label>Teléfono</label><input type="tel"></div>
+                    <div class="field"><label>Contraseña</label><input type="password"></div>
+                    <div class="field"><label>Confirmar contraseña</label><input type="password"></div>
+                    <div class="field"><label>Dirección</label><input type="text"></div>
+                    <div class="field">
+                        <label>Departamento</label>
+                        <select><option>Selecciona...</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Ciudad</label>
+                        <select><option>Selecciona...</option></select>
+                    </div>
+                </div>
+
+                <h2 class="section-title">Informacion Aliado</h2>
+                <div class="form-grid">
+                    <div class="field"><label>Nit Aliado</label><input type="text"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div class="checkbox-group">
+                        <label class="checkbox-item"><input type="checkbox"> Kiai Facturación</label>
+                        <label class="checkbox-item"><input type="checkbox"> Kiai Nómina</label>
+                        <label class="checkbox-item"><input type="checkbox"> Kiai Firma</label>
+                    </div>
+                    <div style="width: 45%;">
+                        <input type="text" placeholder="Test Id Facturación (DIAN)" style="margin-bottom:12px; width:100%">
+                        <input type="text" placeholder="Test Id Empleador (DIAN)" style="width:100%">
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-cerrar" onclick="cerrarCuestionario()">Cancelar</button>
+                <button type="submit" id="btn-submit-form" class="btn btn-registrar">Registrar Ahora</button>
+                <div style="clear:both"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalDesasociar" class="modal-overlay">
+        <div class="form-card" style="max-width: 600px;">
+            <h2 class="section-title" style="margin-top:0">Desasociar Cliente</h2>
+            <p id="desc-desasociar" style="margin-bottom: 20px; font-weight: bold;"></p>
+            <form id="desasociarForm">
+                <input type="hidden" id="desasociar-id">
+                <div class="field">
+                    <label>Motivo de Desasociación</label>
+                    <select id="reg-motivo" required>
+                        <option value="">Seleccione un motivo...</option>
+                        <option>Solicitud del Cliente</option>
+                        <option>Falta de pago</option>
+                        <option>Incumplimiento de contrato</option>
+                        <option>Otros</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Observaciones</label>
+                    <input type="text" id="reg-observacion" placeholder="Escriba aquí los detalles..." required>
+                </div>
+
+                <button type="button" class="btn btn-cerrar" onclick="cerrarModalDesasociar()">Cancelar</button>
+                <button type="submit" class="btn btn-registrar">Guardar y Desasociar</button>
+                <div style="clear:both"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let clientes = [
+            { id:1, nombre:"Adriana Wilches", servicio:"Urocaq EU IPS", nit:"828002088", plan:"Plan premium", fecha:"2024-01-15", activo:true }
+        ];
+        let idEdicion = null;
+
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+            renderizarTodo();
+        }
+
+        function abrirCuestionario(id = null) {
+            const form = document.getElementById('registroForm');
+            const titulo = document.getElementById('modal-titulo');
+            const btnSubmit = document.getElementById('btn-submit-form');
+            
+            if (id) {
+                idEdicion = id;
+                const cli = clientes.find(c => c.id === id);
+                titulo.innerText = "Editar Cliente";
+                btnSubmit.innerText = "Guardar Cambios";
+                document.getElementById('reg-nombre').value = cli.nombre;
+                document.getElementById('reg-nit').value = cli.nit;
+            } else {
+                idEdicion = null;
+                form.reset();
+                titulo.innerText = "Datos de Empresa / Usuario";
+                btnSubmit.innerText = "Registrar Ahora";
+            }
+            document.getElementById('modalCuestionario').classList.add('active');
+        }
+
+        function cerrarCuestionario() {
+            document.getElementById('modalCuestionario').classList.remove('active');
+        }
+
+        // --- Funciones para Desasociar con Modal ---
+        function desasociarCliente(id) {
+            const cli = clientes.find(c => c.id === id);
+            if(cli) {
+                document.getElementById('desasociar-id').value = id;
+                document.getElementById('desc-desasociar').innerText = `¿Seguro que desea desasociar a ${cli.nombre}?`;
+                document.getElementById('modalDesasociar').classList.add('active');
+            }
+        }
+
+        function cerrarModalDesasociar() {
+            document.getElementById('modalDesasociar').classList.remove('active');
+            document.getElementById('desasociarForm').reset();
+        }
+
+        document.getElementById('desasociarForm').onsubmit = function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('desasociar-id').value);
+            const motivo = document.getElementById('reg-motivo').value;
+            const observacion = document.getElementById('reg-observacion').value;
+
+            const index = clientes.findIndex(c => c.id === id);
+            if (index !== -1) {
+                // Guardamos la información en el objeto antes de filtrar
+                console.log(`Desasociando a ${clientes[index].nombre}. Motivo: ${motivo}, Obs: ${observacion}`);
+                clientes = clientes.filter(c => c.id !== id);
+                alert("Cliente desasociado correctamente.");
+            }
+            
+            cerrarModalDesasociar();
+            renderizarTodo();
+        }
+        // ------------------------------------------
+
+        function renderizarTodo() {
+            const container = document.getElementById("clientesContainer");
+            const tbody = document.getElementById("tableBody");
+            
+            container.innerHTML = "";
+            clientes.forEach(c => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <h3>${c.nombre}</h3>
+                    <p>NIT: ${c.nit}</p>
+                    <p>Estado: <span class="${c.activo?'badge-activo':'badge-inactivo'}">${c.activo?'Activo':'Inactivo'}</span></p>
+                    <div class="card-actions">
+                        <button class="btn btn-edit" onclick="abrirCuestionario(${c.id})">Editar📝</button>
+                        <button class="btn btn-suspend" onclick="toggleStatus(${c.id})">Estado⛔</button>
+                        <button class="btn btn-unlink" onclick="desasociarCliente(${c.id})">Desasociar❌</button>
+                        <button class="btn btn-danger" onclick="eliminarCliente(${c.id})">Eliminar🗑️</button>
+                    </div>`;
+                container.appendChild(card);
+            });
+
+            tbody.innerHTML = "";
+            clientes.forEach(c => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${c.id}</td>
+                    <td>${c.nombre}</td>
+                    <td>${c.nit}</td>
+                    <td><span class="badge ${c.activo?'active':'suspended'}">${c.activo?'Activo':'Suspendido'}</span></td>
+                    <td>${c.plan}</td>
+                    <td>${c.fecha}</td>
+                    <td style="display:flex; gap:5px;">
+                        <button class="btn btn-edit" onclick="abrirCuestionario(${c.id})">Editar📝</button>
+                        <button class="btn btn-suspend" onclick="toggleStatus(${c.id})">Estado⛔</button>
+                        <button class="btn btn-unlink" onclick="desasociarCliente(${c.id})">Desasociar❌</button>
+                        <button class="btn btn-danger" onclick="eliminarCliente(${c.id})">Eliminar🗑️</button>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleStatus(id) {
+            const cli = clientes.find(c => c.id === id);
+            if(cli) { cli.activo = !cli.activo; renderizarTodo(); }
+        }
+
+        function eliminarCliente(id) {
+            if(confirm("¿Eliminar este registro definitivamente?")) {
+                clientes = clientes.filter(c => c.id !== id);
+                renderizarTodo();
+            }
+        }
+
+        document.getElementById('registroForm').onsubmit = function(e) {
+            e.preventDefault();
+            const nombreVal = document.getElementById('reg-nombre').value;
+            const nitVal = document.getElementById('reg-nit').value;
+
+            if (idEdicion) {
+                const index = clientes.findIndex(c => c.id === idEdicion);
+                clientes[index].nombre = nombreVal;
+                clientes[index].nit = nitVal;
+                alert("Actualizado con éxito");
+            } else {
+                const nuevo = {
+                    id: clientes.length > 0 ? Math.max(...clientes.map(c => c.id)) + 1 : 1,
+                    nombre: nombreVal,
+                    nit: nitVal,
+                    plan: "Plan premium",
+                    fecha: new Date().toISOString().split('T')[0],
+                    activo: true
+                };
+                clientes.push(nuevo);
+                alert("Registrado con éxito");
+            }
+            
+            cerrarCuestionario();
+            renderizarTodo();
+        };
+
+        function downloadExcel() {
+            const table = document.getElementById("clientTable");
+            const wb = XLSX.utils.table_to_book(table, {sheet: "Aliados"});
+            XLSX.writeFile(wb, "Gestion_Aliados.xlsx");
+        }
+
+        document.addEventListener("DOMContentLoaded", renderizarTodo);
+    </script>
 </body>
 </html>
